@@ -1,10 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Table } from "./components/ui/table";
+import { SearchInput } from "./components/ui/search-input";
+
+interface Advocate {
+  id: string;
+  firstName: string;
+  lastName: string;
+  city: string;
+  degree: string;
+  specialties: string[];
+  yearsOfExperience: string;
+  phoneNumber: string;
+}
 
 export default function Home() {
-  const [advocates, setAdvocates] = useState([]);
-  const [filteredAdvocates, setFilteredAdvocates] = useState([]);
+  const [advocates, setAdvocates] = useState<Advocate[]>([]);
+  const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     console.log("fetching advocates...");
@@ -16,76 +30,82 @@ export default function Home() {
     });
   }, []);
 
-  const onChange = (e) => {
-    const searchTerm = e.target.value;
-
-    document.getElementById("search-term").innerHTML = searchTerm;
-
-    console.log("filtering advocates...");
-    const filteredAdvocates = advocates.filter((advocate) => {
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    const filtered = advocates.filter((advocate) => {
       return (
-        advocate.firstName.includes(searchTerm) ||
-        advocate.lastName.includes(searchTerm) ||
-        advocate.city.includes(searchTerm) ||
-        advocate.degree.includes(searchTerm) ||
-        advocate.specialties.includes(searchTerm) ||
-        advocate.yearsOfExperience.includes(searchTerm)
+        advocate.firstName.toLowerCase().includes(value.toLowerCase()) ||
+        advocate.lastName.toLowerCase().includes(value.toLowerCase()) ||
+        advocate.city.toLowerCase().includes(value.toLowerCase()) ||
+        advocate.degree.toLowerCase().includes(value.toLowerCase()) ||
+        advocate.specialties.some((s) =>
+          s.toLowerCase().includes(value.toLowerCase())
+        ) ||
+        advocate.yearsOfExperience.toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    setFilteredAdvocates(filteredAdvocates);
+    setFilteredAdvocates(filtered);
   };
 
-  const onClick = () => {
-    console.log(advocates);
+  const resetSearch = () => {
+    setSearchTerm("");
     setFilteredAdvocates(advocates);
   };
 
+  const tableHeaders = [
+    "First Name",
+    "Last Name",
+    "City",
+    "Degree",
+    "Specialties",
+    "Years of Experience",
+    "Phone Number",
+  ];
+
   return (
-    <main style={{ margin: "24px" }}>
-      <h1>Solace Advocates</h1>
-      <br />
-      <br />
-      <div>
-        <p>Search</p>
-        <p>
-          Searching for: <span id="search-term"></span>
-        </p>
-        <input style={{ border: "1px solid black" }} onChange={onChange} />
-        <button onClick={onClick}>Reset Search</button>
+    <main className="mx-6 my-8">
+      <h1 className="text-3xl font-bold mb-8">Solace Advocates</h1>
+
+      <div className="mb-8 space-y-4">
+        <SearchInput
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="Search advocates..."
+        />
+        {searchTerm && (
+          <button
+            onClick={resetSearch}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Reset Search
+          </button>
+        )}
       </div>
-      <br />
-      <br />
-      <table>
-        <thead>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>City</th>
-          <th>Degree</th>
-          <th>Specialties</th>
-          <th>Years of Experience</th>
-          <th>Phone Number</th>
-        </thead>
-        <tbody>
-          {filteredAdvocates.map((advocate) => {
-            return (
-              <tr key={advocate.id}>
-                <td>{advocate.firstName}</td>
-                <td>{advocate.lastName}</td>
-                <td>{advocate.city}</td>
-                <td>{advocate.degree}</td>
-                <td>
-                  {advocate.specialties.map((s) => (
-                    <div key={s}>{s}</div>
-                  ))}
-                </td>
-                <td>{advocate.yearsOfExperience}</td>
-                <td>{advocate.phoneNumber}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+
+      <Table headers={tableHeaders}>
+        {filteredAdvocates.map((advocate) => (
+          <tr key={advocate.id} className="border-b border-gray-200">
+            <td className="px-4 py-3">{advocate.firstName}</td>
+            <td className="px-4 py-3">{advocate.lastName}</td>
+            <td className="px-4 py-3">{advocate.city}</td>
+            <td className="px-4 py-3">{advocate.degree}</td>
+            <td className="px-4 py-3">
+              <div className="flex flex-wrap gap-1">
+                {advocate.specialties.map((specialty) => (
+                  <span
+                    key={specialty}
+                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {specialty}
+                  </span>
+                ))}
+              </div>
+            </td>
+            <td className="px-4 py-3">{advocate.yearsOfExperience}</td>
+            <td className="px-4 py-3">{advocate.phoneNumber}</td>
+          </tr>
+        ))}
+      </Table>
     </main>
   );
 }
