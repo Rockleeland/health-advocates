@@ -3,17 +3,12 @@
 import { useEffect, useState } from "react";
 import { Table } from "./components/ui/table";
 import { SearchInput } from "./components/ui/search-input";
+import { advocates } from "@/db/schema";
+import { InferSelectModel } from "drizzle-orm";
 
-interface Advocate {
-  id: string;
-  firstName: string;
-  lastName: string;
-  city: string;
-  degree: string;
+type Advocate = InferSelectModel<typeof advocates> & {
   specialties: string[];
-  yearsOfExperience: string;
-  phoneNumber: string;
-}
+};
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
@@ -38,10 +33,10 @@ export default function Home() {
         advocate.lastName.toLowerCase().includes(value.toLowerCase()) ||
         advocate.city.toLowerCase().includes(value.toLowerCase()) ||
         advocate.degree.toLowerCase().includes(value.toLowerCase()) ||
-        advocate.specialties.some((s) =>
+        advocate.specialties.some((s: string) =>
           s.toLowerCase().includes(value.toLowerCase())
         ) ||
-        advocate.yearsOfExperience.toLowerCase().includes(value.toLowerCase())
+        String(advocate.yearsOfExperience).includes(value)
       );
     });
     setFilteredAdvocates(filtered);
@@ -77,7 +72,7 @@ export default function Home() {
             onClick={resetSearch}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            Reset Search
+            Reset
           </button>
         )}
       </div>
@@ -91,7 +86,7 @@ export default function Home() {
             <td className="px-4 py-3">{advocate.degree}</td>
             <td className="px-4 py-3">
               <div className="flex flex-wrap gap-1">
-                {advocate.specialties.map((specialty) => (
+                {advocate.specialties.map((specialty: string) => (
                   <span
                     key={specialty}
                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
