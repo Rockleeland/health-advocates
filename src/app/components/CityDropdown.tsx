@@ -5,14 +5,7 @@ import { Multiselect, Option } from "./ui/multiselect";
 import { InferSelectModel } from "drizzle-orm";
 import { advocates } from "@/db/schema";
 import { MapPin } from "lucide-react";
-
-type Advocate = InferSelectModel<typeof advocates> & {
-  city: string;
-  specialties: string[];
-  degree: string;
-  yearsOfExperience: number;
-  phoneNumber: string;
-};
+import { Advocate } from "@/app/types";
 
 interface CityDropdownProps {
   advocates: Advocate[];

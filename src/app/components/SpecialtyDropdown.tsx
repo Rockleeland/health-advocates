@@ -5,14 +5,7 @@ import { Multiselect, Option } from "./ui/multiselect";
 import { InferSelectModel } from "drizzle-orm";
 import { advocates } from "@/db/schema";
 import { Tag } from "lucide-react";
-
-type Advocate = InferSelectModel<typeof advocates> & {
-  specialties: string[];
-  city: string;
-  degree: string;
-  yearsOfExperience: number;
-  phoneNumber: string;
-};
+import { Advocate } from "@/app/types";
 
 interface SpecialtyDropdownProps {
   advocates: Advocate[];
@@ -33,7 +26,7 @@ export function SpecialtyDropdown({
       return;
     }
     const uniqueSpecialties = Array.from(
-      new Set(advocates.flatMap((advocate) => advocate.specialties))
+      new Set(advocates.flatMap((advocate) => advocate.payload))
     ) as string[];
     setSpecialtyOptions(
       uniqueSpecialties.map((specialty) => ({
