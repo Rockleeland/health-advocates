@@ -2,46 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { Multiselect, Option } from "./ui/multiselect";
-import { InferSelectModel } from "drizzle-orm";
-import { advocates } from "@/db/schema";
-import { Book } from "lucide-react";
-
-type Advocate = InferSelectModel<typeof advocates> & {
-  degree: string;
-  specialties: string[];
-  city: string;
-  yearsOfExperience: number;
-  phoneNumber: string;
-};
+import { GraduationCap } from "lucide-react";
+import { Advocate } from "@/app/types";
 
 interface DegreeDropdownProps {
-  advocates: Advocate[];
+  allDegrees: string[];
   selectedDegrees: string[];
   onDegreeChange: (values: string[]) => void;
 }
 
 export function DegreeDropdown({
-  advocates,
+  allDegrees,
   selectedDegrees,
   onDegreeChange,
 }: DegreeDropdownProps) {
   const [degreeOptions, setDegreeOptions] = useState<Option[]>([]);
 
   useEffect(() => {
-    if (!advocates || advocates.length === 0) {
+    if (!allDegrees || allDegrees.length === 0) {
       setDegreeOptions([]);
       return;
     }
-    const uniqueDegrees = Array.from(
-      new Set(advocates.map((advocate) => advocate.degree))
-    ) as string[];
     setDegreeOptions(
-      uniqueDegrees.map((degree) => ({
+      allDegrees.map((degree) => ({
         label: degree,
         value: degree,
       }))
     );
-  }, [advocates]);
+  }, [allDegrees]);
 
   const handleDegreeChange = (values: string[]) => {
     onDegreeChange(values);
@@ -53,7 +41,7 @@ export function DegreeDropdown({
       selectedValues={selectedDegrees}
       onChange={handleDegreeChange}
       title="Degree"
-      titleIcon={<Book className="w-4 h-4" />}
+      titleIcon={<GraduationCap className="w-4 h-4" />}
     />
   );
 }

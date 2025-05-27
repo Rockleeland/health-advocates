@@ -2,46 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { Multiselect, Option } from "./ui/multiselect";
-import { InferSelectModel } from "drizzle-orm";
-import { advocates } from "@/db/schema";
 import { MapPin } from "lucide-react";
-
-type Advocate = InferSelectModel<typeof advocates> & {
-  city: string;
-  specialties: string[];
-  degree: string;
-  yearsOfExperience: number;
-  phoneNumber: string;
-};
+import { Advocate } from "@/app/types";
 
 interface CityDropdownProps {
-  advocates: Advocate[];
+  allCities: string[];
   selectedCities: string[];
   onCityChange: (values: string[]) => void;
 }
 
 export function CityDropdown({
-  advocates,
+  allCities,
   selectedCities,
   onCityChange,
 }: CityDropdownProps) {
   const [cityOptions, setCityOptions] = useState<Option[]>([]);
 
   useEffect(() => {
-    if (!advocates || advocates.length === 0) {
+    if (!allCities || allCities.length === 0) {
       setCityOptions([]);
       return;
     }
-    const uniqueCities = Array.from(
-      new Set(advocates.map((advocate) => advocate.city))
-    ) as string[];
     setCityOptions(
-      uniqueCities.map((city) => ({
+      allCities.map((city) => ({
         label: city,
         value: city,
       }))
     );
-  }, [advocates]);
+  }, [allCities]);
 
   const handleCityChange = (values: string[]) => {
     onCityChange(values);
