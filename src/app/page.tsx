@@ -3,48 +3,98 @@
 import { useEffect, useState } from "react";
 import { Table } from "./components/ui/table";
 import { SearchInput } from "./components/ui/search-input";
+import { SpecialtyDropdown } from "./components/SpecialtyDropdown";
+import { CityDropdown } from "./components/CityDropdown";
+import { DegreeDropdown } from "./components/DegreeDropdown";
 import { advocates } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 
 type Advocate = InferSelectModel<typeof advocates> & {
   specialties: string[];
+  city: string;
+  degree: string;
+  yearsOfExperience: number;
+  phoneNumber: string;
 };
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
   const [filteredAdvocates, setFilteredAdvocates] = useState<Advocate[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [selectedDegrees, setSelectedDegrees] = useState<string[]>([]);
 
   useEffect(() => {
     console.log("fetching advocates...");
     fetch("/api/advocates").then((response) => {
       response.json().then((jsonResponse) => {
         setAdvocates(jsonResponse.data);
-        setFilteredAdvocates(jsonResponse.data);
       });
     });
   }, []);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  useEffect(() => {
     const filtered = advocates.filter((advocate) => {
-      return (
-        advocate.firstName.toLowerCase().includes(value.toLowerCase()) ||
-        advocate.lastName.toLowerCase().includes(value.toLowerCase()) ||
-        advocate.city.toLowerCase().includes(value.toLowerCase()) ||
-        advocate.degree.toLowerCase().includes(value.toLowerCase()) ||
+      const matchesSearch =
+        searchTerm === "" ||
+        advocate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        advocate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        advocate.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        advocate.degree.toLowerCase().includes(searchTerm.toLowerCase()) ||
         advocate.specialties.some((s: string) =>
-          s.toLowerCase().includes(value.toLowerCase())
+          s.toLowerCase().includes(searchTerm.toLowerCase())
         ) ||
-        String(advocate.yearsOfExperience).includes(value)
+        String(advocate.yearsOfExperience).includes(searchTerm);
+
+      const matchesSpecialties =
+        selectedSpecialties.length === 0 ||
+        selectedSpecialties.every((specialty) =>
+          advocate.specialties.includes(specialty)
+        );
+
+      const matchesCities =
+        selectedCities.length === 0 ||
+        selectedCities.every((city) => advocate.city === city);
+
+      const matchesDegrees =
+        selectedDegrees.length === 0 ||
+        selectedDegrees.every((degree) => advocate.degree === degree);
+
+      return (
+        matchesSearch && matchesSpecialties && matchesCities && matchesDegrees
       );
     });
     setFilteredAdvocates(filtered);
+  }, [
+    advocates,
+    searchTerm,
+    selectedSpecialties,
+    selectedCities,
+    selectedDegrees,
+  ]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
   };
 
-  const resetSearch = () => {
+  const handleSpecialtyChange = (values: string[]) => {
+    setSelectedSpecialties(values);
+  };
+
+  const handleCityChange = (values: string[]) => {
+    setSelectedCities(values);
+  };
+
+  const handleDegreeChange = (values: string[]) => {
+    setSelectedDegrees(values);
+  };
+
+  const resetAllFilters = () => {
     setSearchTerm("");
-    setFilteredAdvocates(advocates);
+    setSelectedSpecialties([]);
+    setSelectedCities([]);
+    setSelectedDegrees([]);
   };
 
   const tableHeaders = [
@@ -57,6 +107,12 @@ export default function Home() {
     "Phone Number",
   ];
 
+  const isFilteringActive =
+    searchTerm ||
+    selectedSpecialties.length > 0 ||
+    selectedCities.length > 0 ||
+    selectedDegrees.length > 0;
+
   return (
     <main className="mx-6 my-8">
       <h1 className="text-3xl font-bold mb-8">Solace Advocates</h1>
@@ -64,17 +120,35 @@ export default function Home() {
       <div className="mb-8 space-y-4">
         <SearchInput
           value={searchTerm}
-          onChange={handleSearch}
+          onChange={handleSearchChange}
           placeholder="Search advocates..."
         />
-        {searchTerm && (
-          <button
-            onClick={resetSearch}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Reset
-          </button>
-        )}
+
+        <div className="flex flex-wrap gap-3 mt-2">
+          <SpecialtyDropdown
+            advocates={advocates}
+            selectedSpecialties={selectedSpecialties}
+            onSpecialtyChange={handleSpecialtyChange}
+          />
+          <CityDropdown
+            advocates={advocates}
+            selectedCities={selectedCities}
+            onCityChange={handleCityChange}
+          />
+          <DegreeDropdown
+            advocates={advocates}
+            selectedDegrees={selectedDegrees}
+            onDegreeChange={handleDegreeChange}
+          />
+          {isFilteringActive && (
+            <button
+              onClick={resetAllFilters}
+              className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+            >
+              Reset all filters
+            </button>
+          )}
+        </div>
       </div>
 
       <Table headers={tableHeaders}>
