@@ -28,9 +28,10 @@ export default function Home() {
     totalPages: 1,
   });
   const [loading, setLoading] = useState(false);
+  const [allCities, setAllCities] = useState<string[]>([]);
+  const [allSpecialties, setAllSpecialties] = useState<string[]>([]);
+  const [allDegrees, setAllDegrees] = useState<string[]>([]);
 
-  console.log("advocates", advocates);
-  // Build query params and fetch data from API
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -50,9 +51,13 @@ export default function Home() {
     fetch(`/api/advocates?${params.toString()}`)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        console.log("API response", jsonResponse);
         setAdvocates(jsonResponse.data);
         setPagination(jsonResponse.pagination);
+        if (jsonResponse.filterOptions) {
+          setAllCities(jsonResponse.filterOptions.cities);
+          setAllSpecialties(jsonResponse.filterOptions.specialties);
+          setAllDegrees(jsonResponse.filterOptions.degrees);
+        }
         setLoading(false);
       });
   }, [
@@ -143,17 +148,17 @@ export default function Home() {
 
         <div className="flex flex-wrap gap-3 mt-2">
           <SpecialtyDropdown
-            advocates={advocates}
+            allSpecialties={allSpecialties}
             selectedSpecialties={selectedSpecialties}
             onSpecialtyChange={handleSpecialtyChange}
           />
           <CityDropdown
-            advocates={advocates}
+            allCities={allCities}
             selectedCities={selectedCities}
             onCityChange={handleCityChange}
           />
           <DegreeDropdown
-            advocates={advocates}
+            allDegrees={allDegrees}
             selectedDegrees={selectedDegrees}
             onDegreeChange={handleDegreeChange}
           />
