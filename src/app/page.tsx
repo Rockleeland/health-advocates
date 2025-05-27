@@ -6,16 +6,8 @@ import { SearchInput } from "./components/ui/search-input";
 import { SpecialtyDropdown } from "./components/SpecialtyDropdown";
 import { CityDropdown } from "./components/CityDropdown";
 import { DegreeDropdown } from "./components/DegreeDropdown";
-import { advocates } from "@/db/schema";
-import { InferSelectModel } from "drizzle-orm";
-
-type Advocate = InferSelectModel<typeof advocates> & {
-  specialties: string[];
-  city: string;
-  degree: string;
-  yearsOfExperience: number;
-  phoneNumber: string;
-};
+import { Advocate, SortConfig } from "./types";
+import { TABLE_HEADERS, HEADER_TO_PROPERTY_MAP } from "./constants";
 
 export default function Home() {
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
@@ -24,6 +16,10 @@ export default function Home() {
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [selectedDegrees, setSelectedDegrees] = useState<string[]>([]);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    column: null,
+    direction: "asc",
+  });
 
   useEffect(() => {
     console.log("fetching advocates...");
@@ -65,6 +61,31 @@ export default function Home() {
         matchesSearch && matchesSpecialties && matchesCities && matchesDegrees
       );
     });
+
+    if (sortConfig.column) {
+      filtered.sort((a, b) => {
+        let aValue: string | number = a[sortConfig.column as keyof Advocate] as
+          | string
+          | number;
+        let bValue: string | number = b[sortConfig.column as keyof Advocate] as
+          | string
+          | number;
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
     setFilteredAdvocates(filtered);
   }, [
     advocates,
@@ -72,6 +93,7 @@ export default function Home() {
     selectedSpecialties,
     selectedCities,
     selectedDegrees,
+    sortConfig,
   ]);
 
   const handleSearchChange = (value: string) => {
@@ -90,28 +112,44 @@ export default function Home() {
     setSelectedDegrees(values);
   };
 
+  const handleSort = (column: keyof Advocate) => {
+    setSortConfig((currentSort) => ({
+      column,
+      direction:
+        currentSort.column === column && currentSort.direction === "asc"
+          ? "desc"
+          : "asc",
+    }));
+  };
+
   const resetAllFilters = () => {
     setSearchTerm("");
     setSelectedSpecialties([]);
     setSelectedCities([]);
     setSelectedDegrees([]);
+    setSortConfig({ column: null, direction: "asc" });
   };
 
-  const tableHeaders = [
-    "First Name",
-    "Last Name",
-    "City",
-    "Degree",
-    "Specialties",
-    "Years of Experience",
-    "Phone Number",
-  ];
+  const tableHeaders = TABLE_HEADERS.map((header) => {
+    const columnKey = HEADER_TO_PROPERTY_MAP[header];
+    const isSortable = columnKey !== undefined;
+
+    return {
+      label: header,
+      onClick: isSortable ? () => handleSort(columnKey) : undefined,
+      sortDirection:
+        isSortable && sortConfig.column === columnKey
+          ? sortConfig.direction
+          : null,
+    };
+  });
 
   const isFilteringActive =
     searchTerm ||
     selectedSpecialties.length > 0 ||
     selectedCities.length > 0 ||
-    selectedDegrees.length > 0;
+    selectedDegrees.length > 0 ||
+    sortConfig.column !== null;
 
   return (
     <main className="mx-6 my-8">
